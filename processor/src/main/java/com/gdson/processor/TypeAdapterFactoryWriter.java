@@ -22,11 +22,25 @@ import javax.lang.model.element.TypeElement;
 
 public class TypeAdapterFactoryWriter {
     private Set<TypeElement> typeElementSet = new HashSet<>();
+    private String packageName;
+    private String typeAdapterFactoryName;
 
-    public TypeAdapterFactoryWriter(ProcessingEnvironment processingEnv, Set<? extends Element> elements) {
+    public TypeAdapterFactoryWriter(ProcessingEnvironment processingEnv, Set<? extends Element> elements, Set<? extends Element> moduleElements) {
         for (Object element : elements) {
             if (element instanceof TypeElement) {
                 typeElementSet.add((TypeElement) element);
+            }
+        }
+        if (moduleElements.isEmpty()) {
+            packageName = "com.gdson";
+            typeAdapterFactoryName = "GDsonTypeAdapterFactory";
+        } else {
+            for (Element moduleElement : moduleElements) {
+                if (moduleElement instanceof TypeElement) {
+                    ClassName className = ClassName.get((TypeElement) moduleElement);
+                    packageName = className.packageName();
+                    typeAdapterFactoryName = Utils.createTypeAdapterClassName(className) + "Factory";
+                }
             }
         }
     }
@@ -40,13 +54,13 @@ public class TypeAdapterFactoryWriter {
     }
 
     private JavaFile buildJavaFile() {
-        return JavaFile.builder("com.gdson", buildTypeSpec())
+        return JavaFile.builder(packageName, buildTypeSpec())
 //                .skipJavaLangImports(true)
                 .build();
     }
 
     private TypeSpec buildTypeSpec() {
-        TypeSpec.Builder builder = TypeSpec.classBuilder("GDsonTypeAdapterFactory")
+        TypeSpec.Builder builder = TypeSpec.classBuilder(typeAdapterFactoryName)
                 .addAnnotation(Utils.suppressWarnings("unused"))
                 .addModifiers(Modifier.PUBLIC)
                 .addSuperinterface(TypeAdapterFactory.class);

@@ -1,6 +1,7 @@
 package com.gdson.processor;
 
 import com.gdson.GDson;
+import com.gdson.GDsonModule;
 import com.google.auto.service.AutoService;
 
 import java.util.HashSet;
@@ -17,8 +18,9 @@ import javax.lang.model.element.TypeElement;
 public class GDsonProcessor extends AbstractProcessor {
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        HashSet<String> set = new HashSet<>(1);
+        HashSet<String> set = new HashSet<>(2);
         set.add(GDson.class.getCanonicalName());
+        set.add(GDsonModule.class.getCanonicalName());
         return set;
     }
 
@@ -39,7 +41,8 @@ public class GDsonProcessor extends AbstractProcessor {
             typeAdapterWriter.write(new SynchronizedFiler(processingEnv.getFiler()));
         }
 
-        TypeAdapterFactoryWriter typeAdapterFactoryWriter = new TypeAdapterFactoryWriter(processingEnv, elements);
+        Set<? extends Element> moduleElements = roundEnvironment.getElementsAnnotatedWith(GDsonModule.class);
+        TypeAdapterFactoryWriter typeAdapterFactoryWriter = new TypeAdapterFactoryWriter(processingEnv, elements, moduleElements);
         typeAdapterFactoryWriter.write(new SynchronizedFiler(processingEnv.getFiler()));
         return true;
     }
